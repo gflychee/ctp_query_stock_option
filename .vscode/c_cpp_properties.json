@@ -4,7 +4,7 @@
             "name": "Win32",
             "includePath": [
                 "${workspaceFolder}/**",
-                "${workspaceFolder}/sopt_traderapi_3.6.0_20210513/linux/tradeapi/include"
+                "${workspaceFolder}/include"
             ],
             "defines": [
                 "_DEBUG",
