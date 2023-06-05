@@ -1,17 +1,5 @@
 #!/usr/bin/bash
-Hour=`date +%H`
-time=19
-day=`date +%u`
-friday=5
-if test ${Hour} -gt ${time}; then
-	if test ${day} -eq ${friday}; then
-		DT=`date -d "+3 day" +%Y%m%d`
-	else
-		DT=`date -d "+1 day" +%Y%m%d`
-	fi
-else
-	DT=`date +%Y%m%d`
-fi
+DT=`date +%Y%m%d`
 ulimit -c unlimited
 cd ~/ctp_query_stock_option
 export PATH=$PATH:~/ctp_query_stock_option/
