@@ -75,7 +75,7 @@ if __name__ == '__main__':
         yester = yesterday()
         print(f"yesterday:{yester},today:{DT}")
         insinfo = pd.DataFrame(columns=columnname)
-        Stock_Option_DepthMarketData = pd.read_csv(Stock_Option_DepthMarketData_path,encoding="gbk")
+        Stock_Option_DepthMarketData = pd.read_csv(Stock_Option_DepthMarketData_path,dtype={1:str,4:np.float64,44:np.float64},encoding="gbk")
         Stock_Option_Instrument = pd.read_csv(Stock_Option_Instrument_path,encoding="gbk")
         Cffex_DepthMarketData = pd.read_csv(Cffex_DepthMarketData_path,encoding="gbk")
         Cffex_Instrument = pd.read_csv(Cffex_Instrument_path,encoding="gbk")
@@ -110,15 +110,6 @@ if __name__ == '__main__':
             commission_fixed_close_yesterday = 0.0
             commission_fixed_close_today = 0.0
 
-            # if getattr(row,'OptionsType') == 1:
-            #     call_put = 'C'
-            #     Strike = getattr(row,'StrikePrice')
-            # elif getattr(row,'OptionsType') == 2:
-            #     call_put = 'P'
-            #     Strike = getattr(row,'StrikePrice')
-            # else:
-            #     call_put = '-'
-    
             if getattr(row,'ProductID') == 'IF':
                 underlying = 'SH000300'
             elif getattr(row,'ProductID') == 'IC':
@@ -134,13 +125,11 @@ if __name__ == '__main__':
                 if ins == Cffex_DepthMarketData['InstrumentID'][j]:
                     insinfo.loc[i] = [ins,getattr(row,'PriceTick'),getattr(row,'VolumeMultiple'),0.0,commission_rate_open,commission_rate_close_yesterday,commission_rate_close_today,commission_fixed_open,commission_fixed_close_yesterday,commission_fixed_close_today,-1,-1,-1,Cffex_DepthMarketData['PreClosePrice'][j],Cffex_DepthMarketData['LowerLimitPrice'][j],Cffex_DepthMarketData['UpperLimitPrice'][j],call_put,expiredate,Strike,underlying]
                     i = i + 1
-                    #print(i,ins)
                     break
 
-        df_stock=Stock_Option_Instrument.loc[(Stock_Option_Instrument['UnderlyingInstrID'].str.contains('510050') | Stock_Option_Instrument['UnderlyingInstrID'].str.contains('510300') | Stock_Option_Instrument['UnderlyingInstrID'].str.contains('510500'))]
+        df_stock=Stock_Option_Instrument.loc[(Stock_Option_Instrument['ProductID']=='ETF_O') & (Stock_Option_Instrument['UnderlyingInstrID'].str.contains('510050') | Stock_Option_Instrument['UnderlyingInstrID'].str.contains('510300') | Stock_Option_Instrument['UnderlyingInstrID'].str.contains('510500'))]
         for row in df_stock.itertuples():
             ins = getattr(row,'InstrumentID')
-            #print(type(getattr(row,'OptionsType')))
             underlying = '-'
             call_put = '-'
             Strike = 0.0
@@ -172,14 +161,13 @@ if __name__ == '__main__':
             expiredate = int(getattr(row,'ExpireDate'))
             
             for j in range(0,len(Stock_Option_DepthMarketData['InstrumentID'])):
-                if ins == Stock_Option_DepthMarketData['InstrumentID'][j]:
+                if ins == str(Stock_Option_DepthMarketData['InstrumentID'][j]):
                     insinfo.loc[i] = [ins,getattr(row,'PriceTick'),getattr(row,'VolumeMultiple'),0.0,commission_rate_open,commission_rate_close_yesterday,commission_rate_close_today,commission_fixed_open,commission_fixed_close_yesterday,commission_fixed_close_today,-1,-1,-1,Stock_Option_DepthMarketData['PreClosePrice'][j],Stock_Option_DepthMarketData['LowerLimitPrice'][j],Stock_Option_DepthMarketData['UpperLimitPrice'][j],call_put,expiredate,Strike,underlying]
                     i = i + 1
-                    #print(i,ins)
                     break
 
         insinfo.to_csv(out_file + "insinfo_preclose.csv",index=False)
-        msg.append(f"{DT}'s option insinfo_preclose.csv has been generated.")
+        msg.append(f"{DT}'s etf option insinfo_preclose.csv has been generated.")
         send_wechat_bot_msg(msg, mention_list_1)
     except:
         msg.append(f"error in {__file__}\n{traceback.format_exc()}")
