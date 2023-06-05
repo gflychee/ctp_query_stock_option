@@ -7,7 +7,7 @@ DEST := .
 
 module_list := ctp-query-stock-option
 ctp-query-stock-option: ctp-query.o main.o
-	$(CXX) -o $@ $^ -L $(DEST)/lib -lthosttraderapi_se -pthread
+	$(CXX) -o $@ $^ -L $(DEST)/lib -lsoptthosttraderapi_se -pthread
 
 ########## for ctp-query END #############################
 

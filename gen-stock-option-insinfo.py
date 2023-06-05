@@ -61,9 +61,6 @@ def yesterday() -> str:
 Stock_Option_DepthMarketData_path: Path = HOME.joinpath("ctp_query_stock_option", today()+"-option", "DepthMarketData.csv")
 Stock_Option_Instrument_path: Path = HOME.joinpath("ctp_query_stock_option", today()+"-option", "Instrument.csv")
 
-Stock_Spot_DepthMarketData_path: Path = HOME.joinpath("ctp_query_stock_option", today()+"-spot", "DepthMarketData.csv")
-Stock_Spot_Instrument_path: Path = HOME.joinpath("ctp_query_stock_option", today()+"-spot", "Instrument.csv")
-
 Cffex_DepthMarketData_path: Path = HOME.joinpath("ctp-query-insinfo", today()+"-day", "DepthMarketData.csv")
 Cffex_Instrument_path: Path = HOME.joinpath("ctp-query-insinfo", today()+"-day", "Instrument.csv")
 
@@ -80,8 +77,6 @@ if __name__ == '__main__':
         insinfo = pd.DataFrame(columns=columnname)
         Stock_Option_DepthMarketData = pd.read_csv(Stock_Option_DepthMarketData_path,encoding="gbk")
         Stock_Option_Instrument = pd.read_csv(Stock_Option_Instrument_path,encoding="gbk")
-        Stock_Spot_DepthMarketData = pd.read_csv(Stock_Spot_DepthMarketData_path,encoding="gbk")
-        Stock_Spot_Instrument = pd.read_csv(Stock_Spot_Instrument_path,encoding="gbk")
         Cffex_DepthMarketData = pd.read_csv(Cffex_DepthMarketData_path,encoding="gbk")
         Cffex_Instrument = pd.read_csv(Cffex_Instrument_path,encoding="gbk")
         out_file = "/mnt/nas-3/OPTION/sse/insinfo/" + DT + "/"
@@ -95,14 +90,55 @@ if __name__ == '__main__':
             msg.append(f"{yester} etf50 or etf300 or etf500 close price = 0.0.")
             send_wechat_bot_msg(msg, mention_list_1)
 
-        insinfo.loc[0] = ['SH510050',0.001,1,0.0,0.0,0.0,0.0,0.0,0.0,0.0,-1,-1,-1,etf50.iloc[-1][-1],0.0,0.0,'-',99999999,0.0,'-']
-        insinfo.loc[1] = ['SH510300',0.001,1,0.0,0.0,0.0,0.0,0.0,0.0,0.0,-1,-1,-1,etf300.iloc[-1][-1],0.0,0.0,'-',99999999,0.0,'-']
-        insinfo.loc[2] = ['SH510500',0.001,1,0.0,0.0,0.0,0.0,0.0,0.0,0.0,-1,-1,-1,etf500.iloc[-1][-1],0.0,0.0,'-',99999999,0.0,'-']
+        insinfo.loc[0] = ['SH510050',0.001,1,0.0,0.0,0.0,0.0,0.0,0.0,0.0,-1,-1,-1,etf50.iloc[-1][-1],0.0,0.0,'-',99999999,0.0,'SH000016']
+        insinfo.loc[1] = ['SH510300',0.001,1,0.0,0.0,0.0,0.0,0.0,0.0,0.0,-1,-1,-1,etf300.iloc[-1][-1],0.0,0.0,'-',99999999,0.0,'SH000300']
+        insinfo.loc[2] = ['SH510500',0.001,1,0.0,0.0,0.0,0.0,0.0,0.0,0.0,-1,-1,-1,etf500.iloc[-1][-1],0.0,0.0,'-',99999999,0.0,'SH000905']
         
         df_cffex=Cffex_Instrument.loc[(Cffex_Instrument['ExchangeID']=='CFFEX') & (Cffex_Instrument['InstrumentID'].str.contains('IC') | Cffex_Instrument['InstrumentID'].str.contains('IH') | Cffex_Instrument['InstrumentID'].str.contains('IF'))]
         
         i = 3
         for row in df_cffex.itertuples():
+            ins = getattr(row,'InstrumentID')
+            #print(type(getattr(row,'OptionsType')))
+            underlying = '-'
+            call_put = '-'
+            Strike = 0.0
+            commission_rate_open = 0.000023
+            commission_rate_close_yesterday = 0.000023
+            commission_rate_close_today = 0.00023
+            commission_fixed_open = 0.0
+            commission_fixed_close_yesterday = 0.0
+            commission_fixed_close_today = 0.0
+
+            # if getattr(row,'OptionsType') == 1:
+            #     call_put = 'C'
+            #     Strike = getattr(row,'StrikePrice')
+            # elif getattr(row,'OptionsType') == 2:
+            #     call_put = 'P'
+            #     Strike = getattr(row,'StrikePrice')
+            # else:
+            #     call_put = '-'
+    
+            if getattr(row,'ProductID') == 'IF':
+                underlying = 'SH000300'
+            elif getattr(row,'ProductID') == 'IC':
+                underlying = 'SH000905'
+            elif getattr(row,'ProductID') == 'IH':
+                underlying = 'SH000016'
+            else:
+                underlying = '-'
+
+            expiredate = int(getattr(row,'ExpireDate'))
+            
+            for j in range(0,len(Cffex_DepthMarketData['InstrumentID'])):
+                if ins == Cffex_DepthMarketData['InstrumentID'][j]:
+                    insinfo.loc[i] = [ins,getattr(row,'PriceTick'),getattr(row,'VolumeMultiple'),0.0,commission_rate_open,commission_rate_close_yesterday,commission_rate_close_today,commission_fixed_open,commission_fixed_close_yesterday,commission_fixed_close_today,-1,-1,-1,Cffex_DepthMarketData['PreClosePrice'][j],Cffex_DepthMarketData['LowerLimitPrice'][j],Cffex_DepthMarketData['UpperLimitPrice'][j],call_put,expiredate,Strike,underlying]
+                    i = i + 1
+                    #print(i,ins)
+                    break
+
+        df_stock=Stock_Option_Instrument.loc[(Stock_Option_Instrument['UnderlyingInstrID'].str.contains('510050') | Stock_Option_Instrument['UnderlyingInstrID'].str.contains('510300') | Stock_Option_Instrument['UnderlyingInstrID'].str.contains('510500'))]
+        for row in df_stock.itertuples():
             ins = getattr(row,'InstrumentID')
             #print(type(getattr(row,'OptionsType')))
             underlying = '-'
@@ -124,39 +160,24 @@ if __name__ == '__main__':
             else:
                 call_put = '-'
     
-            if getattr(row,'ProductID') == 'IF' or getattr(row,'ProductID') == 'IO':
-                underlying = 'SH000300'
-            elif getattr(row,'ProductID') == 'IM' or getattr(row,'ProductID') == 'MO':
-                underlying = 'SH000852'
-            elif getattr(row,'ProductID') == 'IH' or getattr(row,'ProductID') == 'HO':
+            if getattr(row,'UnderlyingInstrID') == '510050':
                 underlying = 'SH000016'
+            elif getattr(row,'UnderlyingInstrID') == '510300':
+                underlying = 'SH000300'
+            elif getattr(row,'UnderlyingInstrID') == '510500':
+                underlying = 'SH000905'
             else:
                 underlying = '-'
 
-            if getattr(row,'ProductID') == 'IF' or getattr(row,'ProductID') == 'IM' or getattr(row,'ProductID') == 'IH':
-                commission_rate_open = 0.000023
-                commission_rate_close_yesterday = 0.000023
-                commission_rate_close_today = 0.00023
-                commission_fixed_open = 0.0
-                commission_fixed_close_yesterday = 0.0
-                commission_fixed_close_today = 0.0
-
-            if getattr(row,'ProductID') == 'IO' or getattr(row,'ProductID') == 'MO' or getattr(row,'ProductID') == 'HO':
-                commission_rate_open = 0.0
-                commission_rate_close_yesterday = 0.0
-                commission_rate_close_today = 0.0
-                commission_fixed_open = 15.0
-                commission_fixed_close_yesterday = 15.0
-                commission_fixed_close_today = 15.0
-
             expiredate = int(getattr(row,'ExpireDate'))
             
-            for j in range(0,len(DepthMarketData['InstrumentID'])):
-                if ins == DepthMarketData['InstrumentID'][j]:
-                    insinfo.loc[i] = [ins,getattr(row,'PriceTick'),getattr(row,'VolumeMultiple'),0.0,commission_rate_open,commission_rate_close_yesterday,commission_rate_close_today,commission_fixed_open,commission_fixed_close_yesterday,commission_fixed_close_today,-1,-1,-1,DepthMarketData['PreClosePrice'][j],DepthMarketData['LowerLimitPrice'][j],DepthMarketData['UpperLimitPrice'][j],call_put,expiredate,Strike,underlying]
+            for j in range(0,len(Stock_Option_DepthMarketData['InstrumentID'])):
+                if ins == Stock_Option_DepthMarketData['InstrumentID'][j]:
+                    insinfo.loc[i] = [ins,getattr(row,'PriceTick'),getattr(row,'VolumeMultiple'),0.0,commission_rate_open,commission_rate_close_yesterday,commission_rate_close_today,commission_fixed_open,commission_fixed_close_yesterday,commission_fixed_close_today,-1,-1,-1,Stock_Option_DepthMarketData['PreClosePrice'][j],Stock_Option_DepthMarketData['LowerLimitPrice'][j],Stock_Option_DepthMarketData['UpperLimitPrice'][j],call_put,expiredate,Strike,underlying]
                     i = i + 1
                     #print(i,ins)
                     break
+
         insinfo.to_csv(out_file + "insinfo_preclose.csv",index=False)
         msg.append(f"{DT}'s option insinfo_preclose.csv has been generated.")
         send_wechat_bot_msg(msg, mention_list_1)
