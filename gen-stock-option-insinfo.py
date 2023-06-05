@@ -93,11 +93,12 @@ if __name__ == '__main__':
         insinfo.loc[0] = ['SH510050',0.001,1,0.0,0.0,0.0,0.0,0.0,0.0,0.0,-1,-1,-1,etf50.iloc[-1][-1],0.0,0.0,'-',99999999,0.0,'SH000016']
         insinfo.loc[1] = ['SH510300',0.001,1,0.0,0.0,0.0,0.0,0.0,0.0,0.0,-1,-1,-1,etf300.iloc[-1][-1],0.0,0.0,'-',99999999,0.0,'SH000300']
         insinfo.loc[2] = ['SH510500',0.001,1,0.0,0.0,0.0,0.0,0.0,0.0,0.0,-1,-1,-1,etf500.iloc[-1][-1],0.0,0.0,'-',99999999,0.0,'SH000905']
+        i = 3
         
         df_cffex=Cffex_Instrument.loc[(Cffex_Instrument['ExchangeID']=='CFFEX') & (Cffex_Instrument['InstrumentID'].str.contains('IC') | Cffex_Instrument['InstrumentID'].str.contains('IH') | Cffex_Instrument['InstrumentID'].str.contains('IF'))]
+        result = df_cffex.merge(Cffex_DepthMarketData, on='InstrumentID')
         
-        i = 3
-        for row in df_cffex.itertuples():
+        for row in result.itertuples():
             ins = getattr(row,'InstrumentID')
             #print(type(getattr(row,'OptionsType')))
             underlying = '-'
@@ -120,15 +121,13 @@ if __name__ == '__main__':
                 underlying = '-'
 
             expiredate = int(getattr(row,'ExpireDate'))
-            
-            for j in range(0,len(Cffex_DepthMarketData['InstrumentID'])):
-                if ins == Cffex_DepthMarketData['InstrumentID'][j]:
-                    insinfo.loc[i] = [ins,getattr(row,'PriceTick'),getattr(row,'VolumeMultiple'),0.0,commission_rate_open,commission_rate_close_yesterday,commission_rate_close_today,commission_fixed_open,commission_fixed_close_yesterday,commission_fixed_close_today,-1,-1,-1,Cffex_DepthMarketData['PreClosePrice'][j],Cffex_DepthMarketData['LowerLimitPrice'][j],Cffex_DepthMarketData['UpperLimitPrice'][j],call_put,expiredate,Strike,underlying]
-                    i = i + 1
-                    break
+
+            insinfo.loc[i] = [ins,getattr(row,'PriceTick'),getattr(row,'VolumeMultiple'),0.0,commission_rate_open,commission_rate_close_yesterday,commission_rate_close_today,commission_fixed_open,commission_fixed_close_yesterday,commission_fixed_close_today,-1,-1,-1,getattr(row,'PreClosePrice'),getattr(row,'LowerLimitPrice'),getattr(row,'UpperLimitPrice'),call_put,expiredate,Strike,underlying]
+            i = i + 1
 
         df_stock=Stock_Option_Instrument.loc[(Stock_Option_Instrument['ProductID']=='ETF_O') & (Stock_Option_Instrument['UnderlyingInstrID'].str.contains('510050') | Stock_Option_Instrument['UnderlyingInstrID'].str.contains('510300') | Stock_Option_Instrument['UnderlyingInstrID'].str.contains('510500'))]
-        for row in df_stock.itertuples():
+        result = df_stock.merge(Stock_Option_DepthMarketData, on='InstrumentID')
+        for row in result.itertuples():
             ins = getattr(row,'InstrumentID')
             underlying = '-'
             call_put = '-'
@@ -160,14 +159,11 @@ if __name__ == '__main__':
 
             expiredate = int(getattr(row,'ExpireDate'))
             
-            for j in range(0,len(Stock_Option_DepthMarketData['InstrumentID'])):
-                if ins == str(Stock_Option_DepthMarketData['InstrumentID'][j]):
-                    insinfo.loc[i] = [ins,getattr(row,'PriceTick'),getattr(row,'VolumeMultiple'),0.0,commission_rate_open,commission_rate_close_yesterday,commission_rate_close_today,commission_fixed_open,commission_fixed_close_yesterday,commission_fixed_close_today,-1,-1,-1,Stock_Option_DepthMarketData['PreClosePrice'][j],Stock_Option_DepthMarketData['LowerLimitPrice'][j],Stock_Option_DepthMarketData['UpperLimitPrice'][j],call_put,expiredate,Strike,underlying]
-                    i = i + 1
-                    break
+            insinfo.loc[i] = [ins,getattr(row,'PriceTick'),getattr(row,'VolumeMultiple'),0.0,commission_rate_open,commission_rate_close_yesterday,commission_rate_close_today,commission_fixed_open,commission_fixed_close_yesterday,commission_fixed_close_today,-1,-1,-1,getattr(row,'PreClosePrice'),getattr(row,'LowerLimitPrice'),getattr(row,'UpperLimitPrice'),call_put,expiredate,Strike,underlying]
+            i = i + 1
 
-        insinfo.to_csv(out_file + "insinfo_preclose.csv",index=False)
-        msg.append(f"{DT}'s etf option insinfo_preclose.csv has been generated.")
+        insinfo.to_csv(out_file + "insinfo.csv",index=False)
+        msg.append(f"{DT}'s etf option insinfo.csv has been generated.")
         send_wechat_bot_msg(msg, mention_list_1)
     except:
         msg.append(f"error in {__file__}\n{traceback.format_exc()}")
