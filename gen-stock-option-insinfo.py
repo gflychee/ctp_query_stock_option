@@ -27,7 +27,7 @@ mention_list_1 = ["maitri"]
 ROOT: Path = Path("/").expanduser()
 
 def today() -> str:
-    #return "20221116"
+    #return "20230605"
     now: datetime = datetime.now()
     date: str = now.strftime("%Y%m%d")
     find_next: bool = (now.hour >= 20)
@@ -42,7 +42,7 @@ def today() -> str:
             return line
 
 def yesterday() -> str:
-    #return "20221115"
+    #return "20230602"
     now: datetime = datetime.now()
     date: str = now.strftime("%Y%m%d")
     cal_path: Path = HOME.joinpath("ChinaTradingDates.txt")
@@ -75,7 +75,7 @@ if __name__ == '__main__':
         yester = yesterday()
         print(f"yesterday:{yester},today:{DT}")
         insinfo = pd.DataFrame(columns=columnname)
-        Stock_Option_DepthMarketData = pd.read_csv(Stock_Option_DepthMarketData_path,dtype={1:str,4:np.float64,44:np.float64},encoding="gbk")
+        Stock_Option_DepthMarketData = pd.read_csv(Stock_Option_DepthMarketData_path,dtype={1:str,4:np.float64,20:str,44:np.float64},encoding="gbk")
         Stock_Option_Instrument = pd.read_csv(Stock_Option_Instrument_path,encoding="gbk")
         Cffex_DepthMarketData = pd.read_csv(Cffex_DepthMarketData_path,encoding="gbk")
         Cffex_Instrument = pd.read_csv(Cffex_Instrument_path,encoding="gbk")
@@ -90,9 +90,9 @@ if __name__ == '__main__':
             msg.append(f"{yester} etf50 or etf300 or etf500 close price = 0.0.")
             send_wechat_bot_msg(msg, mention_list_1)
 
-        insinfo.loc[0] = ['SH510050',0.001,1,0.0,0.0,0.0,0.0,0.0,0.0,0.0,-1,-1,-1,etf50.iloc[-1][-1],0.0,0.0,'-',99999999,0.0,'SH000016']
-        insinfo.loc[1] = ['SH510300',0.001,1,0.0,0.0,0.0,0.0,0.0,0.0,0.0,-1,-1,-1,etf300.iloc[-1][-1],0.0,0.0,'-',99999999,0.0,'SH000300']
-        insinfo.loc[2] = ['SH510500',0.001,1,0.0,0.0,0.0,0.0,0.0,0.0,0.0,-1,-1,-1,etf500.iloc[-1][-1],0.0,0.0,'-',99999999,0.0,'SH000905']
+        insinfo.loc[0] = ['SH510050',0.001,1,0.0,0.0,0.0,0.0,0.0,0.0,0.0,-1,-1,-1,etf50.iloc[-1][-1],0.0,0.0,'-',99999999,0.0,'-']
+        insinfo.loc[1] = ['SH510300',0.001,1,0.0,0.0,0.0,0.0,0.0,0.0,0.0,-1,-1,-1,etf300.iloc[-1][-1],0.0,0.0,'-',99999999,0.0,'-']
+        insinfo.loc[2] = ['SH510500',0.001,1,0.0,0.0,0.0,0.0,0.0,0.0,0.0,-1,-1,-1,etf500.iloc[-1][-1],0.0,0.0,'-',99999999,0.0,'-']
         i = 3
         
         df_cffex=Cffex_Instrument.loc[(Cffex_Instrument['ExchangeID']=='CFFEX') & (Cffex_Instrument['InstrumentID'].str.contains('IC') | Cffex_Instrument['InstrumentID'].str.contains('IH') | Cffex_Instrument['InstrumentID'].str.contains('IF'))]
@@ -112,11 +112,11 @@ if __name__ == '__main__':
             commission_fixed_close_today = 0.0
 
             if getattr(row,'ProductID') == 'IF':
-                underlying = 'SH000300'
+                underlying = 'SH510300'
             elif getattr(row,'ProductID') == 'IC':
-                underlying = 'SH000905'
+                underlying = 'SH510500'
             elif getattr(row,'ProductID') == 'IH':
-                underlying = 'SH000016'
+                underlying = 'SH510050'
             else:
                 underlying = '-'
 
@@ -149,11 +149,11 @@ if __name__ == '__main__':
                 call_put = '-'
     
             if getattr(row,'UnderlyingInstrID') == '510050':
-                underlying = 'SH000016'
+                underlying = 'SH510050'
             elif getattr(row,'UnderlyingInstrID') == '510300':
-                underlying = 'SH000300'
+                underlying = 'SH510300'
             elif getattr(row,'UnderlyingInstrID') == '510500':
-                underlying = 'SH000905'
+                underlying = 'SH510500'
             else:
                 underlying = '-'
 
