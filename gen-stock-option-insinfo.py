@@ -64,9 +64,9 @@ Stock_Option_Instrument_path: Path = HOME.joinpath("ctp_query_stock_option", tod
 Cffex_DepthMarketData_path: Path = HOME.joinpath("ctp-query-insinfo", today()+"-day", "DepthMarketData.csv")
 Cffex_Instrument_path: Path = HOME.joinpath("ctp-query-insinfo", today()+"-day", "Instrument.csv")
 
-etf50_path: Path = ROOT.joinpath("mnt", "nas-3", "ProcessedData", "cffex_sh_snap", "guojun", "etf_full_feather", yesterday(), "SH510050-"+yesterday()+".feather")
-etf300_path: Path = ROOT.joinpath("mnt", "nas-3", "ProcessedData", "cffex_sh_snap", "guojun", "etf_full_feather", yesterday(), "SH510300-"+yesterday()+".feather")
-etf500_path: Path = ROOT.joinpath("mnt", "nas-3", "ProcessedData", "cffex_sh_snap", "guojun", "etf_full_feather", yesterday(), "SH510500-"+yesterday()+".feather")
+# etf50_path: Path = ROOT.joinpath("mnt", "nas-3", "ProcessedData", "cffex_sh_snap", "guojun", "etf_full_feather", yesterday(), "SH510050-"+yesterday()+".feather")
+# etf300_path: Path = ROOT.joinpath("mnt", "nas-3", "ProcessedData", "cffex_sh_snap", "guojun", "etf_full_feather", yesterday(), "SH510300-"+yesterday()+".feather")
+# etf500_path: Path = ROOT.joinpath("mnt", "nas-3", "ProcessedData", "cffex_sh_snap", "guojun", "etf_full_feather", yesterday(), "SH510500-"+yesterday()+".feather")
 
 if __name__ == '__main__':
     try:
@@ -82,18 +82,14 @@ if __name__ == '__main__':
         out_file = "/mnt/nas-3/OPTION/sse/insinfo/" + DT + "/"
         if not os.path.exists(out_file):
             os.mkdir(out_file)
-    
-        etf50 = pd.read_feather(etf50_path)
-        etf300 = pd.read_feather(etf300_path)
-        etf500 = pd.read_feather(etf500_path)
-        if etf50.iloc[-1][-1] == 0.0 or etf300.iloc[-1][-1] == 0.0 or etf500.iloc[-1][-1] == 0.0:
-            msg.append(f"{yester} etf50 or etf300 or etf500 close price = 0.0.")
-            send_wechat_bot_msg(msg, mention_list_1)
 
-        insinfo.loc[0] = ['SH510050',0.001,1,0.0,0.0,0.0,0.0,0.0,0.0,0.0,-1,-1,-1,etf50.iloc[-1][-1],0.0,0.0,'-',99999999,0.0,'-']
-        insinfo.loc[1] = ['SH510300',0.001,1,0.0,0.0,0.0,0.0,0.0,0.0,0.0,-1,-1,-1,etf300.iloc[-1][-1],0.0,0.0,'-',99999999,0.0,'-']
-        insinfo.loc[2] = ['SH510500',0.001,1,0.0,0.0,0.0,0.0,0.0,0.0,0.0,-1,-1,-1,etf500.iloc[-1][-1],0.0,0.0,'-',99999999,0.0,'-']
-        i = 3
+        i = 0
+
+        df_etf = Stock_Option_DepthMarketData.loc[(Stock_Option_DepthMarketData['InstrumentID']=='510050') | (Stock_Option_DepthMarketData['InstrumentID']=='510300') | (Stock_Option_DepthMarketData['InstrumentID']=='510500')]
+        for row in df_etf.itertuples():
+            ins = "SH" + getattr(row,'InstrumentID')
+            insinfo.loc[i] = [ins,0.001,1,0.0,0.0,0.0,0.0,0.0,0.0,0.0,-1,-1,-1,getattr(row,'PreClosePrice'),getattr(row,'LowerLimitPrice'),getattr(row,'UpperLimitPrice'),'-',99999999,0.0,'-']
+            i = i + 1
         
         df_cffex=Cffex_Instrument.loc[(Cffex_Instrument['ExchangeID']=='CFFEX') & (Cffex_Instrument['InstrumentID'].str.contains('IC') | Cffex_Instrument['InstrumentID'].str.contains('IH') | Cffex_Instrument['InstrumentID'].str.contains('IF'))]
         result = df_cffex.merge(Cffex_DepthMarketData, on='InstrumentID')
